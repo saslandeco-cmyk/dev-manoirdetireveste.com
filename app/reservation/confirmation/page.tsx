@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Confirmation(){return <main className="reservation"><p className="eyebrow">MANOIR DE TIREVESTE</p><h1>Merci pour<br/><em>votre réservation.</em></h1><p className="muted">Votre paiement est en cours de vérification. La confirmation définitive est envoyée après réception et validation de la notification sécurisée de Stripe.</p><Link className="btn" href="/">Retour à l'accueil</Link></main>}

@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum AccommodationType { ROOM COTTAGE }
+enum BookingStatus { PENDING_PAYMENT CONFIRMED CANCELLED EXPIRED COMPLETED }
+enum PaymentStatus { PENDING PAID PARTIALLY_REFUNDED REFUNDED FAILED }
+enum UserRole { ADMIN MANAGER STAFF }
+model Accommodation {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  type        AccommodationType
+  capacity    Int
+  description String @db.Text
+  facilities  String[]
+  basePrice   Int
+  active      Boolean @default(true)
+  sortOrder   Int @default(0)
+  bookings    Booking[]
+  rates       SeasonalRate[]
+  blocks      AvailabilityBlock[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Guest {
+  id        String @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+  notes     String? @db.Text
+  bookings  Booking[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([email])
+}
+model Booking {
+  id                  String @id @default(cuid())
+  reference           String @unique
+  accommodationId     String
+  guestId             String
+  arrival             DateTime
+  departure            DateTime
+  guests                Int
+  status                BookingStatus @default(PENDING_PAYMENT)
+  paymentStatus         PaymentStatus @default(PENDING)
+  totalAmount           Int
+  depositAmount         Int
+  balanceAmount         Int
+  balanceDueAt          DateTime?
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String?
+  expiresAt             DateTime?
+  source                String @default("DIRECT")
+  notes                 String? @db.Text
+  accommodation         Accommodation @relation(fields: [accommodationId], references: [id])
+  guest                 Guest @relation(fields: [guestId], references: [id])
+  payments              Payment[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@index([accommodationId, arrival, departure, status])
+  @@index([status, expiresAt])
+}
+model Payment {
+  id                    String @id @default(cuid())
+  bookingId             String
+  amount                Int
+  currency              String @default("eur")
+  status                PaymentStatus @default(PENDING)
+  kind                  String
+  stripePaymentIntentId String?
+  createdAt             DateTime @default(now())
+  booking               Booking @relation(fields: [bookingId], references: [id])
+}
+model SeasonalRate {
+  id              String @id @default(cuid())
+  accommodationId String
+  startDate       DateTime
+  endDate         DateTime
+  nightlyPrice    Int
+  minimumNights   Int @default(1)
+  label           String?
+  accommodation  Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  @@index([accommodationId, startDate, endDate])
+}
+model AvailabilityBlock {
+  id              String @id @default(cuid())
+  accommodationId String
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?
+  accommodation  Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+}
+model AddOn {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+  price       Int
+  unit        String @default("PER_STAY")
+  active      Boolean @default(true)
+}
+model GiftCard {
+  id          String @id @default(cuid())
+  code        String @unique
+  initialValue Int
+  balance     Int
+  expiresAt   DateTime?
+  recipientEmail String?
+  createdAt   DateTime @default(now())
+}
+model AdminUser {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+  role         UserRole @default(STAFF)
+  active       Boolean @default(true)
+  createdAt    DateTime @default(now())
+}
+model AuditLog {
+  id        String @id @default(cuid())
+  actor     String
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}

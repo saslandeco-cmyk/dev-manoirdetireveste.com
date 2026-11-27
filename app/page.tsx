@@ -1,0 +1,16 @@
+import { prisma } from "@/lib/prisma";
+import BookingSearch from "@/components/booking-search";
+export const dynamic = "force-dynamic";
+export default async function Home() {
+ const stays = await prisma.accommodation.findMany({where:{active:true},orderBy:{sortOrder:"asc"}});
+ const jsonLd = {"@context":"https://schema.org","@type":"LodgingBusiness","name":"Manoir de Tireveste","url":"https://www.manoirdetireveste.com","telephone":"+33558896240","address":{"@type":"PostalAddress","streetAddress":"32 route du Caillaou","postalCode":"40260","addressLocality":"Lesperon","addressCountry":"FR"}};
+ return <main><header className="header"><a className="brand" href="/">MANOIR DE TIREVESTE<small>LES LANDES · LESPERON</small></a><nav><a href="#hebergements">Hébergements</a><a href="#experience">Le Manoir</a><a href="#region">Découvrir les Landes</a><a href="#contact">Contact</a></nav><a className="cta" href="#reservation">Réserver ↗</a></header>
+ <section className="hero"><p className="eyebrow">UNE PARENTHÈSE NATURE DANS LES LANDES</p><h1>Le charme d’une<br/><em>maison de campagne.</em></h1><p>Un lieu à part, entre océan et forêt, pour ralentir, respirer et savourer l’instant.</p><a className="btn" href="#reservation">Découvrir les disponibilités ↗</a></section>
+ <section className="wrap"><p className="eyebrow">BIENVENUE CHEZ NOUS</p><h2>Un écrin de verdure<br/><em>au cœur des Landes.</em></h2><p className="muted">Florence et Jeannot vous accueillent dans une maison de maître et son parc arboré. Profitez d’un séjour paisible à proximité de la forêt landaise et de l’océan.</p></section>
+ <section className="wrap booking" id="reservation"><p className="eyebrow">RÉSERVATION DIRECTE</p><h2>Votre prochaine <em>escapade.</em></h2><BookingSearch stays={stays}/></section>
+ <section className="wrap" id="hebergements"><p className="eyebrow">NOS HÉBERGEMENTS</p><h2>Choisissez votre <em>séjour.</em></h2><div className="cards">{stays.map(s=><article className="card" key={s.id}><p className="eyebrow">{s.type==="ROOM"?"CHAMBRE D'HÔTES":"GÎTE"}</p><h3>{s.name}</h3><p className="muted">{s.description}</p><p className="muted">Capacité : {s.capacity} personne(s)</p></article>)}</div>{!stays.length&&<p className="notice">Les hébergements seront publiés ici après leur création dans l'administration.</p>}</section>
+ <section className="wrap" id="experience"><p className="eyebrow">L'ESPRIT DU MANOIR</p><h2>Nature, calme et <em>hospitalité.</em></h2><p className="muted">Piscine, jardin, forêt, pistes cyclables et plages landaises : composez un séjour à votre rythme.</p></section>
+ <section className="wrap booking" id="region"><p className="eyebrow">À DÉCOUVRIR</p><h2>Entre forêt et <em>océan.</em></h2><p className="muted">Explorez Lesperon, les pistes cyclables, les plages et les paysages du territoire.</p></section>
+ <footer className="footer" id="contact"><strong>MANOIR DE TIREVESTE</strong><p>32 route du Caillaou, 40260 Lesperon · 05 58 89 62 40</p><p><a href="mailto:contact@manoirdetireveste.com">contact@manoirdetireveste.com</a></p><p>Mentions légales · Confidentialité · Conditions de réservation</p></footer>
+ <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd)}}/></main>;
+}
